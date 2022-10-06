@@ -37,8 +37,12 @@ pub struct Vote<'info> {
     )]
     pub voter_account: Account<'info, VoterAccount>,
 
-    #[account(mut)]
-    pub preference_account: Account<'info, CandidateAccount>,
+    #[account(
+        mut,
+        seeds = [CANDIDATE.as_bytes(), &preference.piece.key.to_bytes()],
+        bump
+    )]
+    pub preference: Account<'info, CandidateAccount>,
 
     #[account(signer, mut)]
     pub user_authority: AccountInfo<'info>,
@@ -48,13 +52,27 @@ pub struct Vote<'info> {
 
 #[derive(Accounts)]
 pub struct AmendVote<'info> {
-    #[account(mut)]
+    #[account(
+        init,
+        payer = user_authority,
+        space = 8 + VoterAccount::MAX_SIZE,
+        seeds = [VOTE.as_bytes(), &user_authority.key.to_bytes()],
+        bump
+    )]
     pub voter_account: Account<'info, VoterAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [CANDIDATE.as_bytes(), &former_preference.piece.key.to_bytes()],
+        bump
+    )]
     pub former_preference: Account<'info, CandidateAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [CANDIDATE.as_bytes(), &new_preference.piece.key.to_bytes()],
+        bump
+    )]
     pub new_preference: Account<'info, CandidateAccount>,
 
     #[account(signer, mut)]
@@ -63,8 +81,28 @@ pub struct AmendVote<'info> {
 
 #[derive(Accounts)]
 pub struct InitializeFirst<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        init,
+        payer = user_authority,
+        space = 8 + CandidateAccount::MAX_SIZE
+        seeds = [CANDIDATE.as_bytes(), &piece.key.to_bytes()],
+        bump
+    )]
     pub candidate: Account<'info, CandidateAccount>,
+
+    #[account(
+        mut,
+        init,
+        payer = user_authority,
+        space = 8 + CandidateList::MAX_SIZE
+        seeds = [LIST.as_bytes()],
+        bump
+    )]
+    pub list: Account<'info, CandidateList>,
+
+    #[account]
+    pub piece: AccountInfo<'info>,
 
     #[account(signer, mut)]
     pub user_authority: AccountInfo<'info>,
@@ -72,11 +110,21 @@ pub struct InitializeFirst<'info> {
 
 #[derive(Accounts)]
 pub struct ListPiece<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        init,
+        payer = user_authority,
+        space = 8 + CandidateAccount::MAX_SIZE
+        seeds = [CANDIDATE.as_bytes(), &piece.key.to_bytes()],
+        bump
+    )]
     pub candidate: Account<'info, CandidateAccount>,
 
     #[account(mut)]
-    pub last: Account<'info, CandidateAccount>,
+    pub list: Account<'info, CandidateList>,
+
+    #[account]
+    pub piece: AccountInfo<'info>,
 
     #[account(signer, mut)]
     pub user_authority: AccountInfo<'info>,
@@ -93,12 +141,20 @@ impl VoterAccount {
 }
 
 #[account]
+pub struct CandidateList {
+    size: u16
+}
+
+impl CandidateList {
+    pub const MAX_SIZE: usize = 2;
+}
+
+#[account]
 pub struct CandidateAccount {
     piece: Pubkey,
     votes: u64,
-    next: Pubkey
 }
 
 impl CandidateAccount {
-    pub const MAX_SIZE: usize = 128;
+    pub const MAX_SIZE: usize = 40;
 }
