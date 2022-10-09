@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Connection, DataSizeFilter, PublicKey } from "@solana/web3.js";
 import idl from '../idl.json'
 
 export type EndpointTypes = 'mainnet' | 'devnet' | 'localnet'
@@ -98,15 +98,38 @@ export class CandidateAccount {
     }
 
     // TODO make sure requests are batched together!
-    public static async getAllCandidates(connection) {
+    public static async getAllCandidates(connection:Connection) {
         let list = await CandidateList.getList(connection)
 
-        let candidates = []
+        let candidateList = this.getCandidatePdaList(list.size)
 
-        for(let i=0; i<list.size; i++) {
-            candidates.push(this.getCandidateAt(connection, i))
+        return connection.getMultipleAccountsInfo(candidateList)
+    }
+
+    private static cmp(a:CandidateAccount, b:CandidateAccount) {
+        return Number(a.getVotes() > b.getVotes())
+    }
+
+    public static async getCandidateObjectList(accounts_info) {
+        let accounts:CandidateAccount[] = []
+        accounts_info.forEach(element => {
+            accounts.push(new CandidateAccount(element))
+        });
+
+        return accounts.sort(this.cmp)
+    }
+
+    private static getCandidatePdaList(size) {
+        let pdaList=[]
+        for (let i=0; i<size; i++){
+            let indexSeed = Buffer.from("")
+            indexSeed.writeInt16BE(i)
+            let pda = PublicKey.findProgramAddressSync(
+                [Buffer.from("candidate"), indexSeed],
+                programID
+            )
+            pdaList.push(pda)
         }
-
-        return candidates
+        return pdaList
     }
 }
