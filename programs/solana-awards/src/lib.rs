@@ -149,6 +149,7 @@ pub struct ListPiece<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// seeds: VOTE, PK bytes
 #[account]
 pub struct VoterAccount {
     owner: Pubkey,
@@ -160,6 +161,7 @@ impl VoterAccount {
     pub const MAX_SIZE: usize = 64;
 }
 
+// seeds: LIST
 #[account]
 pub struct CandidateList {
     size: u16
@@ -169,6 +171,7 @@ impl CandidateList {
     pub const MAX_SIZE: usize = 2;
 }
 
+// seeds: CANDIDATE, index (BIG ENDIAN)
 #[account]
 pub struct CandidateAccount {
     // NOTE: is token PK

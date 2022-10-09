@@ -1,6 +1,9 @@
 import { PublicKey } from "@solana/web3.js";
+import idl from '../idl.json'
 
 export type EndpointTypes = 'mainnet' | 'devnet' | 'localnet'
+
+export const programID = new PublicKey(idl.metadata.address);
 
 export class VoterAccount {
 
@@ -14,16 +17,21 @@ export class VoterAccount {
         this.preference = new PublicKey(this.getPreference())
     }
 
-    getData() {
-        return this.data;
-    }
-
     getOwner() {
         return this.data.slice(8, 8+32);
     }
 
     getPreference() {
         return this.data.slice(8+32, 8+32+32);
+    }
+
+    public static async getVoterAccount(connection, pk:PublicKey) {
+        let pda = PublicKey.findProgramAddressSync(
+            [Buffer.from("vote"), pk.toBytes()],
+            programID
+        )
+        let info_raw = await connection.getAccountInfo(pda[0])
+        return new VoterAccount(info_raw)
     }
 }
 
@@ -37,12 +45,17 @@ export class CandidateList {
         this.size = this.getSize().valueOf();
     }
 
-    getData() {
-        return this.data;
-    }
-
     getSize() {
         return Number(Buffer.from(this.data).readUInt16LE(8))
+    }
+
+    public static async getList(connection) {
+        let pda = PublicKey.findProgramAddressSync(
+            [Buffer.from("list")],
+            programID
+        )
+        let info_raw = await connection.getAccountInfo(pda[0])
+        return new CandidateList(info_raw)
     }
 }
 
@@ -60,10 +73,6 @@ export class CandidateAccount {
         this.index = this.getIndex().valueOf()
     }
 
-    getData() {
-        return this.data;
-    }
-
     getPiece() {
         return new PublicKey(this.data.slice(8, 8+32))
     }
@@ -74,5 +83,30 @@ export class CandidateAccount {
 
     getIndex() {
         return Number(Buffer.from(this.data).readUInt16LE(8+32+8))
+    }
+
+    public static async getCandidateAt(connection, index) {
+        // TODO check!
+        let indexSeed = Buffer.from("")
+        indexSeed.writeInt16BE(index)
+        let pda = PublicKey.findProgramAddressSync(
+            [Buffer.from("candidate"), indexSeed],
+            programID
+        )
+        let info_raw = await connection.getAccountInfo(pda[0])
+        return new CandidateAccount(info_raw)
+    }
+
+    // TODO make sure requests are batched together!
+    public static async getAllCandidates(connection) {
+        let list = await CandidateList.getList(connection)
+
+        let candidates = []
+
+        for(let i=0; i<list.size; i++) {
+            candidates.push(this.getCandidateAt(connection, i))
+        }
+
+        return candidates
     }
 }
