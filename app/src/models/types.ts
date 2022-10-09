@@ -97,28 +97,6 @@ export class CandidateAccount {
         return new CandidateAccount(info_raw)
     }
 
-    // TODO make sure requests are batched together!
-    public static async getAllCandidates(connection:Connection) {
-        let list = await CandidateList.getList(connection)
-
-        let candidateList = this.getCandidatePdaList(list.size)
-
-        return connection.getMultipleAccountsInfo(candidateList)
-    }
-
-    private static cmp(a:CandidateAccount, b:CandidateAccount) {
-        return Number(a.getVotes() > b.getVotes())
-    }
-
-    public static async getCandidateObjectList(accounts_info) {
-        let accounts:CandidateAccount[] = []
-        accounts_info.forEach(element => {
-            accounts.push(new CandidateAccount(element))
-        });
-
-        return accounts.sort(this.cmp)
-    }
-
     private static getCandidatePdaList(size) {
         let pdaList=[]
         for (let i=0; i<size; i++){
@@ -131,5 +109,27 @@ export class CandidateAccount {
             pdaList.push(pda)
         }
         return pdaList
+    }
+
+    private static async getAllCandidates(connection:Connection) {
+        let list = await CandidateList.getList(connection)
+
+        let candidateList = this.getCandidatePdaList(list.size)
+
+        return connection.getMultipleAccountsInfo(candidateList)
+    }
+
+    private static cmp(a:CandidateAccount, b:CandidateAccount) {
+        return Number(a.getVotes() > b.getVotes())
+    }
+
+    public static async getCandidateObjectList(connection:Connection) {
+        let accounts:CandidateAccount[] = []
+        let accounts_info = await this.getAllCandidates(connection)
+        accounts_info.forEach(element => {
+            accounts.push(new CandidateAccount(element.data))
+        });
+
+        return accounts.sort((a:CandidateAccount, b:CandidateAccount) => {return Number(a.votes > b.votes)})
     }
 }
