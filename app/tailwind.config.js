@@ -19,8 +19,8 @@ module.exports = {
             display: ['PT Mono, monospace'],
             body: ['Inter, sans-serif'],
           },
-          'primary': '#2a2a2a',           /* Primary color */
-          'primary-focus': '#9945FF',     /* Primary color - focused */
+          'primary': '#DBA800',           /* Primary color */
+          'primary-focus': '#FFD700',     /* Primary color - focused */
           'primary-content': '#ffffff',   /* Foreground content color to use on primary color */
 
           'secondary': '#f6d860',         /* Secondary color */
@@ -44,6 +44,9 @@ module.exports = {
           'success': '#009485',           /* Success */
           'warning': '#ff9900',           /* Warning */
           'error': '#ff5724',             /* Error */
+
+          'new-gradient': '#DBA800',      /* Test */
+          'new-gradient2': '#14F195',      /* Test2 */
         },
       },
       // backup themes:
