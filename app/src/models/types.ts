@@ -78,7 +78,7 @@ export class CandidateAccount {
     }
 
     getVotes() {
-        return Number(Buffer.from(this.data).readBigUInt64LE(8+32))
+        return Number(Buffer.from(this.data).readUInt32LE(8+32))
     }
 
     getIndex() {
@@ -117,10 +117,6 @@ export class CandidateAccount {
         let candidateList = this.getCandidatePdaList(list.size)
 
         return connection.getMultipleAccountsInfo(candidateList)
-    }
-
-    private static cmp(a:CandidateAccount, b:CandidateAccount) {
-        return Number(a.getVotes() > b.getVotes())
     }
 
     public static async getCandidateObjectList(connection:Connection) {
